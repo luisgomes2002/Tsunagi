@@ -9,6 +9,10 @@
 #include <fstream>
 #include <stdexcept>
 #include <iostream>
+#include <chrono>
+#include <iomanip>
+
+#include <filesystem>
 
 class QueueManager
 {
@@ -18,8 +22,10 @@ private:
 	std::condition_variable cv;
 	std::ofstream logFile;
 
+	std::string getTimestamp();
+
 public:
-	QueueManager(const std::string &logFilename = "messages.log");
+	QueueManager(const std::string &logFilename = "../logs/messages.txt");
 	~QueueManager();
 
 	void push(const std::string &queueName, const std::string &message);

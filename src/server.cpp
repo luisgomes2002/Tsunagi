@@ -11,7 +11,7 @@ void consumerThread()
 {
 	while (true)
 	{
-		std::string msg = qm.pop("fila1");
+		std::string msg = qm.pop("fila");
 		std::cout << "[Consumidor] Processando: " << msg << "\n";
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -31,7 +31,7 @@ void clientHandler(SOCKET clientSocket)
 		{
 			break;
 		}
-		qm.push("fila1", msg.payload);
+		qm.push("fila", msg.payload);
 	}
 	closesocket(clientSocket);
 }
