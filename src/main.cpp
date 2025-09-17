@@ -1,66 +1,33 @@
 #include <iostream>
-#include <thread>
-#include <winsock2.h>
-#include <ws2tcpip.h>
 
 #include "queue_manager.h"
 #include "server.h"
 
-QueueManager qm;
-
 int main()
 {
-	WSADATA wsaData;
-	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
-	{
-		std::cerr << "Erro ao inicializar Winsock\n";
-		return 1;
-	};
+	QueueManager queueManager;
 
-	SOCKET listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-	if (listenSocket == INVALID_SOCKET)
-	{
-		std::cerr << "Erro ao criar socket\n";
-		return 1;
-	}
+	std::string client1 = "client1";
+	std::string client2 = "client2";
+	std::string client3 = "client3";
 
-	sockaddr_in serverAddr{};
-	serverAddr.sin_family = AF_INET;
-	serverAddr.sin_port = htons(5000);
-	serverAddr.sin_addr.s_addr = INADDR_ANY;
+	Message msg1("123");
+	msg1.addPayload("Oi, tudo bem?");
+	msg1.addPayload("certo");
+	msg1.addPayload("vc vai?");
+	queueManager.push(client1, msg1);
 
-	if (bind(listenSocket, (sockaddr *)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR)
-	{
-		std::cerr << "Erro ao bindar socket\n";
-		return 1;
-	}
+	Message msg2("234");
+	msg2.addPayload("Voce recebeu um pedido");
+	queueManager.push(client2, msg2);
 
-	if (listen(listenSocket, SOMAXCONN) == SOCKET_ERROR)
-	{
-		std::cerr << "Erro ao colocar socket em listen\n";
-		return 1;
-	}
+	Message msg3("542");
+	msg3.addPayload("Pedido #123");
+	queueManager.push(client3, msg3);
 
-	std::cout << "Servidor TCP iniciado na porta 5000\n";
+	queueManager.print();
 
-	std::thread c1(consumerThread);
-	std::thread c2(consumerThread);
-	std::thread c3(consumerThread);
-	c1.detach();
-	c2.detach();
-	c3.detach();
-
-	while (true)
-	{
-		SOCKET clientSocket = accept(listenSocket, nullptr, nullptr);
-		if (clientSocket != INVALID_SOCKET)
-		{
-			std::thread(clientHandler, clientSocket).detach();
-		}
-	}
-
-	closesocket(listenSocket);
-	WSACleanup();
+	std::cin.get();
 
 	return 0;
 }

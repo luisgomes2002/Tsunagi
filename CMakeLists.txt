@@ -9,6 +9,7 @@ include_directories(include)
 
 add_executable(tsunagi
     src/main.cpp
+    src/message.cpp
     src/queue_manager.cpp
     src/server.cpp
 )

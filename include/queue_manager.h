@@ -1,36 +1,25 @@
 #ifndef QUEUE_MANAGER_H
 #define QUEUE_MANAGER_H
 
-#include <string>
-#include <queue>
-#include <unordered_map>
-#include <mutex>
-#include <condition_variable>
-#include <fstream>
-#include <stdexcept>
 #include <iostream>
-#include <chrono>
-#include <iomanip>
+#include <vector>
+#include <unordered_map>
 
-#include <filesystem>
+#include "message.h"
 
 class QueueManager
 {
 private:
-	std::unordered_map<std::string, std::queue<std::string>> queues;
-	std::mutex mtx;
-	std::condition_variable cv;
-	std::ofstream logFile;
-
-	std::string getTimestamp();
+	std::unordered_map<std::string, std::vector<Message>> queues;
 
 public:
-	QueueManager(const std::string &logFilename = "../logs/messages.txt");
+	QueueManager();
 	~QueueManager();
 
-	void push(const std::string &queueName, const std::string &message);
+	void push(std::string &clientId, Message &Message);
+	void pop(std::string &clientId);
 
-	std::string pop(const std::string &queueName);
+	void print();
 };
 
 #endif

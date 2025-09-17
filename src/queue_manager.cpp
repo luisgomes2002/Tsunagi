@@ -1,63 +1,36 @@
 #include "queue_manager.h"
 
-QueueManager::QueueManager(const std::string &logFilename)
+QueueManager::QueueManager() {};
+
+QueueManager::~QueueManager() {};
+
+void QueueManager::push(std::string &clientId, Message &message)
 {
-	std::filesystem::path logPath(logFilename);
+	queues[clientId].push_back(message);
+};
 
-	if (!std::filesystem::exists(logPath.parent_path()))
-	{
-		std::filesystem::create_directories(logPath.parent_path());
-	}
-
-	logFile.open(logFilename, std::ios::app);
-	if (!logFile.is_open())
-	{
-		throw std::runtime_error("Não foi possível abrir arquivo de log");
-	}
+void QueueManager::pop(std::string &clientId)
+{
 }
 
-QueueManager::~QueueManager()
+void QueueManager::print()
 {
-	logFile.close();
-}
-
-std::string QueueManager::getTimestamp()
-{
-	auto now = std::chrono::system_clock::now();
-	auto in_time_t = std::chrono::system_clock::to_time_t(now);
-	std::stringstream ss;
-	ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %H:%M:%S");
-	return ss.str();
-}
-
-void QueueManager::push(const std::string &queueName, const std::string &message)
-{
-	std::unique_lock<std::mutex> lock(mtx);
-	if (queues[queueName].size() >= 1000000)
+	for (const auto &pair : queues)
 	{
-		std::cout << "Fila cheia, descartando mensagem\n";
-		return;
+		std::cout << pair.first << ":\n";
+
+		for (const auto &msg : pair.second)
+		{
+			std::cout << "  id: " << msg.getId() << ", payloads: [ ";
+
+			const auto &payloads = msg.getPayloads();
+			for (size_t i = 0; i < payloads.size(); i++)
+			{
+				std::cout << payloads[i];
+				if (i < payloads.size() - 1)
+					std::cout << ", ";
+			}
+			std::cout << " ]\n";
+		}
 	}
-
-	queues[queueName].push(message);
-
-	if (logFile.is_open())
-	{
-		logFile << "[" << getTimestamp() << "] " << queueName << ": " << message << "\n";
-		logFile.flush();
-	}
-
-	cv.notify_one();
-}
-
-std::string QueueManager::pop(const std::string &queueName)
-{
-	std::unique_lock<std::mutex> lock(mtx);
-
-	cv.wait(lock, [&]
-			{ return !queues[queueName].empty(); });
-
-	std::string msg = queues[queueName].front();
-	queues[queueName].pop();
-	return msg;
 }

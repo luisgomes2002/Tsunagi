@@ -3,7 +3,4 @@
 
 #include <winsock2.h>
 
-void clientHandler(SOCKET clientSocket);
-void consumerThread();
-
 #endif
