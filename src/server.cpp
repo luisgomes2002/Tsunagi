@@ -1,6 +1,6 @@
 #include "server.h"
 
-Server::Server(int port, QueueManager &qm) : port(port), queueManager(qm), serverSocket(INVALID_SOCKET)
+Server::Server(int port, QueueManager &queueManager) : port(port), queueManager(queueManager), serverSocket(INVALID_SOCKET)
 {
 }
 
@@ -8,8 +8,6 @@ Server::~Server()
 {
 	stop();
 }
-
-std::atomic<int> Server::clientCounter{1};
 
 bool Server::start()
 {
@@ -75,7 +73,6 @@ void Server::stop()
 
 void Server::handleClient(SOCKET clientSocket, QueueManager &queueManager)
 {
-	std::string clientId = "client" + std::to_string(clientCounter++);
 
 	char buffer[1024];
 	while (true)
@@ -83,18 +80,32 @@ void Server::handleClient(SOCKET clientSocket, QueueManager &queueManager)
 		int bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
 		if (bytesReceived <= 0)
 		{
-			std::cout << "Sem conexao com " << clientId << std::endl;
-			break;
+			std::cout << "Cliente desconectou antes de enviar o indentificador.\n\n";
+			closesocket(clientSocket);
+			return;
 		}
 
-		std::string payload(buffer, bytesReceived);
+		std::string clientName(buffer, bytesReceived);
+		std::cout << "Cliente conectado: " << clientName << "\n\n";
 
-		Message message("1");
-		message.addPayload(payload);
-		queueManager.push(clientId, message);
+		while (true)
+		{
+			bytesReceived = recv(clientSocket, buffer, sizeof(buffer), 0);
+			if (bytesReceived <= 0)
+			{
+				std::cout << "\nCliente " << clientName << " desconectou.\n";
+				break;
+			}
 
-		std::cout << "Mensagem recebida do " << clientId << ": " << payload << std::endl;
-		queueManager.print();
+			std::string payload(buffer, bytesReceived);
+
+			Message message("1");
+			message.addPayload(payload);
+			queueManager.push(clientName, message);
+
+			std::cout << "Mensagem recebida de " << clientName << ": " << payload << std::endl;
+			queueManager.print();
+		}
 	}
 
 	closesocket(clientSocket);

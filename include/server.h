@@ -3,7 +3,6 @@
 
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <atomic>
 #include <iostream>
 
 #include "queue_manager.h"
@@ -15,10 +14,9 @@ private:
 	SOCKET serverSocket;
 	int port;
 	QueueManager &queueManager;
-	static std::atomic<int> clientCounter;
 
 public:
-	Server(int port, QueueManager &qm);
+	Server(int port, QueueManager &queueManager);
 	~Server();
 
 	bool start();
