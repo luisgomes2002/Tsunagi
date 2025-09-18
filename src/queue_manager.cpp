@@ -13,6 +13,22 @@ QueueManager::~QueueManager()
 void QueueManager::push(const std::string &clientId, const Message &message)
 {
 	std::lock_guard<std::mutex> lock(mutex);
+
+	auto &queue = queues[clientId];
+
+	for (auto &msg : queue)
+	{
+		if (msg.getId() == message.getId())
+		{
+			for (auto &payload : message.getPayloads())
+			{
+				msg.addPayload(payload);
+			}
+		}
+
+		return;
+	}
+
 	queues[clientId].push_back(message);
 };
 
@@ -61,10 +77,9 @@ void QueueManager::startConsumer(const std::string &clientId)
 						Message message("dummy");
 						if (pop(clientId, message))
 						{
-							std::cout << "Consumindo message id: " << message.getId() << " do " << clientId << "\n";
+							std::cout << "\nConsumindo message id: " << message.getId() << " do " << clientId << "\n";
 						}else{
 							std::this_thread::sleep_for(std::chrono::milliseconds(100));
-       
 						}
 					} })
 		.detach();
