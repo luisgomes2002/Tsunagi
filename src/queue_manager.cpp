@@ -10,11 +10,11 @@ QueueManager::~QueueManager()
 	std::cout << "Queue destruida" << std::endl;
 };
 
-void QueueManager::push(const std::string &clientId, const Message &message)
+void QueueManager::push(const std::string &clientId, const std::string &queueId, const Message &message)
 {
 	std::lock_guard<std::mutex> lock(mutex);
 
-	auto &queue = queues[clientId];
+	auto &queue = queues[clientId][queueId];
 
 	for (auto &msg : queue)
 	{
@@ -29,17 +29,17 @@ void QueueManager::push(const std::string &clientId, const Message &message)
 		return;
 	}
 
-	queues[clientId].push_back(message);
+	queue.push_back(message);
 };
 
-bool QueueManager::pop(const std::string &clientId, Message &message)
+bool QueueManager::pop(const std::string &clientId, const std::string &queueId, Message &message)
 {
 	std::lock_guard<std::mutex> lock(mutex);
 
 	if (!queues[clientId].empty())
 	{
-		message = queues[clientId].back();
-		queues[clientId].pop_back();
+		message = queues[clientId][queueId].back();
+		queues[clientId][queueId].pop_back();
 		return true;
 	}
 
@@ -48,34 +48,30 @@ bool QueueManager::pop(const std::string &clientId, Message &message)
 
 void QueueManager::print()
 {
-	for (const auto &pair : queues)
+	for (const auto &clientPair : queues)
 	{
-		std::cout << pair.first << ":\n";
-
-		for (const auto &msg : pair.second)
+		std::cout << clientPair.first << ":\n";
+		for (const auto &queuePair : clientPair.second)
 		{
-			std::cout << "  id: " << msg.getId() << ", payloads: [ ";
-
-			const auto &payloads = msg.getPayloads();
-			for (size_t i = 0; i < payloads.size(); i++)
+			for (const auto &msg : queuePair.second)
 			{
-				std::cout << payloads[i];
-				if (i < payloads.size() - 1)
-					std::cout << ", ";
+				std::cout << "    id: " << msg.getId() << ", payloads: [ ";
+				for (const auto &p : msg.getPayloads())
+					std::cout << p << " ";
+				std::cout << "]\n";
 			}
-			std::cout << " ]\n";
 		}
 	}
 }
 
-void QueueManager::startConsumer(const std::string &clientId)
+void QueueManager::startConsumer(const std::string &clientId, const std::string &queueId)
 {
-	std::thread([this, clientId]()
+	std::thread([this, clientId, queueId]()
 				{
 					while (true)
 					{
 						Message message("dummy");
-						if (pop(clientId, message))
+						if (pop(clientId, queueId, message))
 						{
 							std::cout << "\nConsumindo message id: " << message.getId() << " do " << clientId << "\n";
 						}else{

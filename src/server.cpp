@@ -97,13 +97,28 @@ void Server::handleClient(SOCKET clientSocket, QueueManager &queueManager)
 				break;
 			}
 
-			std::string payload(buffer, bytesReceived);
+			std::string received(buffer, bytesReceived);
 
-			Message message("1");
+			size_t sep = received.find('|');
+			std::string messageId;
+			std::string payload;
+
+			if (sep != std::string::npos)
+			{
+				messageId = received.substr(0, sep);
+				payload = received.substr(sep + 1);
+			}
+			else
+			{
+				messageId = "unknown";
+				payload = received;
+			}
+
+			Message message(messageId);
 			message.addPayload(payload);
-			queueManager.push(clientName, message);
+			queueManager.push(clientName, messageId, message);
 
-			std::cout << "Mensagem recebida de " << clientName << ": " << payload << std::endl;
+			std::cout << "------------------------------------------------------------------" << std::endl;
 			queueManager.print();
 		}
 	}
