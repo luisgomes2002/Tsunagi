@@ -29,6 +29,6 @@ with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.sendall(mensagem_com_id.encode())
                 print(f"Enviado: {mensagem_com_id}")
                 count += 1
-                time.sleep(0.05)  
+                time.sleep(3)  
     except KeyboardInterrupt:
         print("\nCliente encerrado pelo usuário.")
