@@ -2,18 +2,23 @@
 #define QUEUE_MANAGER_H
 
 #include <iostream>
-#include <vector>
 #include <unordered_map>
 #include <thread>
 #include <mutex>
+#include <deque>
 
 #include "message.h"
+
+struct Queue
+{
+	std::deque<Message> messages;
+	std::mutex mtx;
+};
 
 class QueueManager
 {
 private:
-	std::unordered_map<std::string, std::unordered_map<std::string, std::vector<Message>>> queues;
-	std::mutex mutex;
+	std::unordered_map<std::string, std::unordered_map<std::string, Queue>> queues;
 
 public:
 	QueueManager();

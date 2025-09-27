@@ -15,6 +15,8 @@ private:
 	int port;
 	QueueManager &queueManager;
 
+	static bool recvAll(SOCKET socket, char *buffer, int totalBytes);
+
 public:
 	Server(int port, QueueManager &queueManager);
 	~Server();
