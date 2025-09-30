@@ -85,6 +85,63 @@ void Server::stop()
 	WSACleanup();
 }
 
+void Server::rush(std::string &rest, std::string &clientName, SOCKET &clientSocket, QueueManager &queueManager)
+{
+	std::string queueId = rest;
+	Message message("");
+	std::string allMessages;
+
+	while (queueManager.consumeRush(clientName, queueId, message))
+	{
+		for (const auto &payload : message.getPayloads())
+		{
+			if (!allMessages.empty())
+				allMessages += "\n";
+			allMessages += payload;
+		}
+	}
+
+	if (allMessages.empty())
+	{
+		allMessages = "EMPTY";
+	}
+
+	int size = (int)allMessages.size();
+	send(clientSocket, reinterpret_cast<char *>(&size), sizeof(size), 0);
+	send(clientSocket, allMessages.c_str(), size, 0);
+
+	std::cout << "Cliente " << clientName
+			  << " consumiu todas msgs da fila " << queueId << "\n";
+}
+
+void Server::single(std::string &rest, std::string &clientName, SOCKET &clientSocket, QueueManager &queueManager)
+{
+	std::string queueId = rest;
+	Message message("");
+	std::string msg;
+
+	if (queueManager.consumeSigle(clientName, queueId, message))
+	{
+		msg = message.getPayloads().front();
+		int size = (int)msg.size();
+		send(clientSocket, reinterpret_cast<char *>(&size), sizeof(size), 0);
+		send(clientSocket, msg.c_str(), size, 0);
+
+		std::cout << "Cliente " << clientName
+				  << " consumiu UMA mensagem da fila " << queueId << "\n";
+	}
+	else
+	{
+		msg = "EMPTY";
+		int size = (int)msg.size();
+		send(clientSocket, reinterpret_cast<char *>(&size), sizeof(size), 0);
+		send(clientSocket, msg.c_str(), size, 0);
+	}
+
+	std::cout << "Cliente " << clientName
+			  << " tentou consumir da fila " << queueId << " mas estava vazia\n";
+}
+
 void Server::handleClient(SOCKET clientSocket, QueueManager &queueManager)
 {
 
@@ -127,28 +184,47 @@ void Server::handleClient(SOCKET clientSocket, QueueManager &queueManager)
 		std::string received(msgBuffer.begin(), msgBuffer.end());
 
 		size_t sep = received.find('|');
-		std::string messageId;
-		std::string payload;
+		std::string command;
+		std::string rest;
 
 		if (sep != std::string::npos)
 		{
-			messageId = received.substr(0, sep);
-			payload = received.substr(sep + 1);
+			command = received.substr(0, sep);
+			rest = received.substr(sep + 1);
 		}
 		else
 		{
-			messageId = "unknown";
-			payload = received;
+			command = "PUB";
+			rest = received;
 		}
 
-		Message message(messageId);
-		message.addPayload(payload);
-		queueManager.push(clientName, messageId, message);
+		if (command == "PUB")
+		{
+			size_t sep2 = rest.find('|');
+			std::string queueId;
+			std::string payload;
 
-		std::cout << "\n\n"
-				  << std::endl;
+			if (sep2 != std::string::npos)
+			{
+				queueId = rest.substr(0, sep2);
+				payload = rest.substr(sep2 + 1);
+			}
+			else
+			{
+				queueId = "default";
+				payload = rest;
+			}
 
-		queueManager.print();
+			Message message(queueId);
+			message.addPayload(payload);
+			queueManager.publish(clientName, queueId, message);
+
+			std::cout << "Mensagem publicada na fila " << queueId << "\n";
+		}
+		else if (command == "CON")
+		{
+			single(rest, clientName, clientSocket, queueManager);
+		}
 	}
 
 	closesocket(clientSocket);

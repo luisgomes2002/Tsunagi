@@ -25,6 +25,10 @@ public:
 	void stop();
 
 	static void handleClient(SOCKET clientSocket, QueueManager &queueManager);
+
+	// Consumers
+	static void rush(std::string &rest, std::string &clientName, SOCKET &clientSocket, QueueManager &queueManager);
+	static void single(std::string &rest, std::string &clientName, SOCKET &clientSocket, QueueManager &queueManager);
 };
 
 #endif

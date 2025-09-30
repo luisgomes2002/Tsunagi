@@ -24,10 +24,9 @@ public:
 	QueueManager();
 	~QueueManager();
 
-	void push(const std::string &clientId, const std::string &queueId, const Message &message);
-	bool pop(const std::string &clientId, const std::string &queueId, Message &message);
-	void print();
-	void startConsumer(const std::string &clientId, const std::string &queueId);
+	void publish(const std::string &clientId, const std::string &queueId, const Message &message);
+	bool consumeRush(const std::string &clientId, const std::string &queueId, Message &message);
+	bool consumeSigle(const std::string &clientId, const std::string &queueId, Message &message);
 };
 
 #endif

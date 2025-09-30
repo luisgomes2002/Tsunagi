@@ -18,6 +18,9 @@ public:
 	const std::vector<std::string> &getPayloads() const;
 
 	void addPayload(const std::string &data);
+	void removePayload();
+
+	std::string getFirstPayload();
 };
 
 #endif

@@ -8,3 +8,14 @@ std::string Message::getId() const { return id; };
 const std::vector<std::string> &Message::getPayloads() const { return payloads; };
 
 void Message::addPayload(const std::string &data) { payloads.push_back(data); }
+
+void Message::removePayload()
+{
+	if (!payloads.empty())
+		payloads.erase(payloads.begin());
+}
+
+std::string Message::getFirstPayload()
+{
+	return payloads.empty() ? "EMPTY" : payloads.front();
+}
