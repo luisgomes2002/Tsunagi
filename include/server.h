@@ -4,6 +4,9 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iostream>
+#include <chrono>
+#include <unordered_map>
+#include <mutex>
 
 #include "queue_manager.h"
 #include "message.h"
@@ -11,11 +14,14 @@
 class Server
 {
 private:
-	SOCKET serverSocket;
 	int port;
+	SOCKET serverSocket;
 	QueueManager &queueManager;
 
 	static bool recvAll(SOCKET socket, char *buffer, int totalBytes);
+
+	std::unordered_map<std::string, SOCKET> clientSockets;
+	std::mutex clientMtx;
 
 public:
 	Server(int port, QueueManager &queueManager);
@@ -24,9 +30,10 @@ public:
 	bool start();
 	void stop();
 
-	static void handleClient(SOCKET clientSocket, QueueManager &queueManager);
+	void notifyClient(const std::string &clientId, const std::string &queueId);
 
-	// Consumers
+	static void handleClient(SOCKET clientSocket, QueueManager &queueManager, Server *instance);
+
 	static void rush(std::string &rest, std::string &clientName, SOCKET &clientSocket, QueueManager &queueManager);
 	static void single(std::string &rest, std::string &clientName, SOCKET &clientSocket, QueueManager &queueManager);
 };
